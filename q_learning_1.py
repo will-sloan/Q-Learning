@@ -9,8 +9,8 @@ LEARNING_RATE = 0.1
 DISCOUNT = 0.95
 EPISODES = 25000
 
-SHOW_EVERY = 10000
-
+SHOW_EVERY = 20007
+TALLY_EVERY = 50
 
 #print(env.observation_space.high)
 #print(env.observation_space.low)
@@ -79,29 +79,37 @@ for episode in range(EPISODES):
 
             new_q  = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
             q_table[discrete_state+(action, )] = new_q
-
+        # Checks if cart is at the flag
         elif new_state[0] >= env.goal_position:
             print(f"Go to goal at episode {episode}")
+            # Sets the q value to the top value (highest reward is 0)
             q_table[discrete_state + (action, )] = 0
-
+        # Sets the state to the new state, since the q value calculation is based on the previous observation_space
         discrete_state = new_discrete_state
+    # Check if epsilon is still in range
     if  END_EPSILON_DECAYING >= episode >= START_EPSILON_DECAYING:
         epsilon -= epsilon_decay_value
+    # Gather total reward of the episode
     ep_rewards.append(episode_reward)
+    # Same as episode % TALLY_EVERY == 0
+    # If it is a time to show the gui, then make these calculations for the previous TALLY_EVERY
+    # If TALLY_EVERY = 1000, then this would get the average, min  and max of the past 1000 episodes
 
-    if not episode % SHOW_EVERY:
-        average_reward = sum(ep_rewards[-SHOW_EVERY:])/len(ep_rewards[-SHOW_EVERY:])
+    if not episode % TALLY_EVERY:
+        average_reward = sum(ep_rewards[-TALLY_EVERY:])/len(ep_rewards[-TALLY_EVERY:])
         aggr_ep_rewards['ep'].append(episode)
         aggr_ep_rewards['avg'].append(average_reward)
-        aggr_ep_rewards['min'].append(min(ep_rewards[-SHOW_EVERY:]))
-        aggr_ep_rewards['max'].append(max(ep_rewards[-SHOW_EVERY:]))
+        aggr_ep_rewards['min'].append(min(ep_rewards[-TALLY_EVERY:]))
+        aggr_ep_rewards['max'].append(max(ep_rewards[-TALLY_EVERY:]))
 
-        print(f"Episode {episode} avg {average_reward} min {min(ep_rewards[-SHOW_EVERY:])} max {max(ep_rewards[-SHOW_EVERY:])}")
+        print(f"Episode {episode} avg {average_reward} min {min(ep_rewards[-TALLY_EVERY:])} max {max(ep_rewards[-TALLY_EVERY:])}")
 
 
 
 env.close()
-
+# Makes plot of the aggr_ep_rewards.
+# A new point is added every TALLY_EVERY. So in this case, every 50 episodes.
+# To add a dot to each data point, add marker='o' like so plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['avg'], label='avg', marker='o')
 plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['avg'], label='avg')
 plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['min'], label='min')
 plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['max'], label='max')
