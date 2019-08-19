@@ -9,16 +9,16 @@ from time import sleep
 
 style.use("ggplot")
 
-SIZE = 10
-NUM_EPISODES = 25000
+SIZE = 15
+NUM_EPISODES = 100000
 MOVE_PENALTY = 1
 ENEMY_PENALTY = 300
 FOOD_REWARD = 25
 
-epsilon =0.3
+epsilon = 0.90
 EPS_DECAY = 0.9998
 
-SHOW_EVERY = 5000
+SHOW_EVERY = 20000
 YES = False
 if YES:
     start_q_table = "blob_models/qtable-1565704933.pickle" # or filename
@@ -66,6 +66,8 @@ class Blob:
             self.move(x=0, y=1)
         elif choice == 3:
             self.move(x=0, y=-1)
+        #elif choice == 4:
+            #self.move(x=10, y=0)
 
 
     def move(self, x=False, y=False):
@@ -103,7 +105,7 @@ if start_q_table is None:
 else:
     with open(start_q_table, "rb") as f:
         q_table = pickle.load(f)
-
+#print(list(q_table.values())[0])
 episode_rewards = []
 
 for episode in range(NUM_EPISODES):
@@ -112,14 +114,15 @@ for episode in range(NUM_EPISODES):
     enemy = Blob()
 
     if episode % SHOW_EVERY == 0:
-        print(f"on # {episode}, epsilon: {epsilon}")
-        print(f"{SHOW_EVERY} ep mean {np.mean(episode_rewards[-SHOW_EVERY:])}")
+        print(f"on episode # {episode}, epsilon: {epsilon}")
+        print(f"Show every {SHOW_EVERY} last {SHOW_EVERY} episodes mean {np.mean(episode_rewards[-SHOW_EVERY:])}")
         show =True
     else:
         show = False
 
     episode_reward = 0
     for i in range(200):
+
         obs = (player-food, player-enemy)
         if np.random.random() > epsilon:
             action = np.argmax(q_table[obs])
@@ -129,12 +132,13 @@ for episode in range(NUM_EPISODES):
         player.action(action)
         enemy.move()
         food.move()
-        if show:
-            sleep(0.15)
+        # if show:
+        #     sleep(0.015)
 
         if player.x == enemy.x and player.y == enemy.y:
             reward = -ENEMY_PENALTY
         elif player.x == food.x and player.y == food.y:
+            #print("got food")
             reward = FOOD_REWARD
         else:
             reward = -MOVE_PENALTY
@@ -142,6 +146,8 @@ for episode in range(NUM_EPISODES):
         new_obs = (player-food, player -enemy)
         max_future_q = np.max(q_table[new_obs])
         current_q = q_table[obs][action]
+        #print(f"current_q = {current_q} obs = {obs} action = {action}")
+        #sleep(1000)
 
         if reward == FOOD_REWARD:
             new_q = FOOD_REWARD
@@ -171,6 +177,8 @@ for episode in range(NUM_EPISODES):
         episode_reward += reward
         if reward == FOOD_REWARD or reward == -ENEMY_PENALTY:
             break
+        #print(i)
+        #sleep(1)
     episode_rewards.append(episode_reward)
     epsilon *= EPS_DECAY
 moving_avg = np.convolve(episode_rewards, np.ones((SHOW_EVERY,)) / SHOW_EVERY, mode='valid')
