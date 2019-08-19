@@ -149,8 +149,9 @@ for episode in range(NUM_EPISODES):
         #     enemy.action(enemy_action)
         #     player.action(player_action)
         #     count +=1
+        player.move()
         enemy.action(enemy_action)
-        player.action(player_action)
+
         food.move()
         # if show:
         #     sleep(0.015)
@@ -215,7 +216,7 @@ for episode in range(NUM_EPISODES):
     epsilon *= EPS_DECAY
 player_moving_avg = np.convolve(player_episode_rewards, np.ones((SHOW_EVERY,)) / SHOW_EVERY, mode='valid')
 enemy_moving_avg = np.convolve(enemy_episode_rewards, np.ones((SHOW_EVERY,)) / SHOW_EVERY, mode='valid')
-plt.plot(player_moving_avg, color='blue')
+plt.plot(player_moving_avg, color='green')
 plt.plot(enemy_moving_avg)
 plt.ylabel(f"reward {SHOW_EVERY}")
 plt.xlabel("episode #")
