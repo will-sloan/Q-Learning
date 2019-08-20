@@ -92,6 +92,8 @@ class DQNAgent:
         self.replay_memory.append(transition)
 
     def get_qs(self, state):
+        print(f"state is {state}\n\n\n", f"state shape is {state.shape}\n\n\n", *state.shape)
+        #print((np.array(state).reshape(-1, *state.shape)/255), (np.array(state).reshape(-1, *state.shape)/255).shape, *(np.array(state).reshape(-1, *state.shape)/255).shape)
         return self.model.predict(np.array(state).reshape(-1, *state.shape)/255)[0]
 
     def train(self, terminal_state, step):
@@ -334,7 +336,7 @@ for episode in tqdm(range(1, EPISODES+1), ascii=True, unit='episode'):
 
         # Save model, but only when min reward is greater or equal a set value
         #if min_reward >= MIN_REWARD:
-        agent.model.save(f'models/{MODEL_NAME}__{max_reward:_>7.2f}max_{average_reward:_>7.2f}avg_{min_reward:_>7.2f}min__{int(time.time())}.model')
+        #agent.model.save(f'models/{MODEL_NAME}__{max_reward:_>7.2f}max_{average_reward:_>7.2f}avg_{min_reward:_>7.2f}min__{int(time.time())}.model')
 
     # Decay epsilon
     if epsilon > MIN_EPSILON:
