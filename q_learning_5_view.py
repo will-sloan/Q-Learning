@@ -1,8 +1,9 @@
 import numpy as np
 import keras.backend.tensorflow_backend as backend
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Activation, Flatten
 from tensorflow.keras.optimizers import Adam
+
 #from tensorflow.keras.callbacks import TensorBoard
 import tensorflow as tf
 from collections import deque
@@ -16,6 +17,11 @@ import matplotlib.pyplot as plt
 
 from matplotlib import style
 style.use("ggplot")
+
+#
+# Used to see the game rather then just train
+#
+LOAD_MODEL = "models/2x256____25.00max_-187.36avg_-454.00min__1566268387.model"
 
 aggr_ep_rewards = {'ep': [], 'avg': [], 'min': [], 'max' : []}
 
@@ -32,13 +38,13 @@ MEMORY_FRACTION = 0.20
 EPISODES = 10_000
 
 # Exploration settings
-epsilon = 1  # not a constant, going to be decayed
+epsilon = 0  # not a constant, going to be decayed
 EPSILON_DECAY = 0.99975
 MIN_EPSILON = 0.001
 
 #  Stats settings
-AGGREGATE_STATS_EVERY = 50  # episodes
-SHOW_PREVIEW = False
+AGGREGATE_STATS_EVERY = 1  # episodes
+SHOW_PREVIEW = True
 
 # class ModifiedTensorBoard(TensorBoard):
 #     def __init__(self, **kwargs):
@@ -62,7 +68,9 @@ SHOW_PREVIEW = False
 #         self._write_logs(stats, self.step)
 
 class DQNAgent:
-    def __init__(self):
+    def __init__(self, model=None):
+
+
         # gets trained
         self.model = self.create_model()
         # gets predict against
@@ -75,17 +83,20 @@ class DQNAgent:
 
 
     def create_model(self):
-        model = Sequential()
-        model.add(Conv2D(256, (3,3), input_shape= env.OBSERVATION_SPACE_VALUES, activation='relu'))
-        #model.add(Activation('relu'))
-        model.add(Dropout(0.2))
-        model.add(Conv2D(256, (3,3), activation='relu'))
-        #model.add(Activation('relu'))
-        model.add(Dropout(0.2))
-        model.add(Flatten())
-        model.add(Dense(64))
-        model.add(Dense(env.ACTION_SPACE_SIZE, activation='linear'))
-        model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
+        if LOAD_MODEL is not None:
+            model = load_model(LOAD_MODEL)
+        else:
+            model = Sequential()
+            model.add(Conv2D(256, (3,3), input_shape= env.OBSERVATION_SPACE_VALUES, activation='relu'))
+            #model.add(Activation('relu'))
+            model.add(Dropout(0.2))
+            model.add(Conv2D(256, (3,3), activation='relu'))
+            #model.add(Activation('relu'))
+            model.add(Dropout(0.2))
+            model.add(Flatten())
+            model.add(Dense(64))
+            model.add(Dense(env.ACTION_SPACE_SIZE, activation='linear'))
+            model.compile(loss='mse', optimizer='adam', metrics=['accuracy'])
         return model
 
     def update_replay_memory(self, transition):
@@ -312,7 +323,7 @@ for episode in tqdm(range(1, EPISODES+1), ascii=True, unit='episode'):
         episode_reward += reward
 
         if SHOW_PREVIEW and not episode % AGGREGATE_STATS_EVERY:
-            env_render()
+            env.render()
 
         agent.update_replay_memory((current_state, action, reward, new_state, done))
         agent.train(done, step)
