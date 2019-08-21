@@ -177,7 +177,8 @@ for episode in range(NUM_ESPIODES):
             #print("Tryna leave")
             break
         if not episode % SHOW_EVERY:
-            time.sleep(0.05)
+            print(snake_position)
+            time.sleep(5)
             env = np.zeros((SIZE,SIZE, 3), dtype=np.uint8)
             for position in snake_position:
                 env[position[0]][position[1]] = (0,255,0)
