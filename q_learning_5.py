@@ -94,7 +94,7 @@ class DQNAgent:
         self.replay_memory.append(transition)
 
     def get_qs(self, state):
-        print(f"Return value from get_qs is {self.model.predict(np.array(state).reshape(-1, *state.shape)/255)}")
+        #print(f"Return value from get_qs is {self.model.predict(np.array(state).reshape(-1, *state.shape)/255)}")
         return self.model.predict(np.array(state).reshape(-1, *state.shape)/255)[0]
 
     def train(self, terminal_state, step):
