@@ -15,7 +15,7 @@ import cv2
 import matplotlib.pyplot as plt
 import copy
 
-LOAD_MODEL = "first_snake__-250.00max_-300.97avg_-315.00min__1566644183.model"
+LOAD_MODEL = "first_snake__-213.00max_-299.68avg_-312.00min__1566648165.model"
 
 # Snake game that learns that  going backwards is bad
 class Apple:
