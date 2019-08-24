@@ -100,7 +100,7 @@ while flag:
     k = None
     while time.time() < t_end:
         if k == None:
-            k = cv2.waitKey(10)
+            k = cv2.waitKey(200)
         else:
             continue
     #print(f"Before action, Snake action is {button_direction}")

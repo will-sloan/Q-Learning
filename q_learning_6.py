@@ -13,6 +13,9 @@ import os
 from PIL import Image
 import cv2
 import matplotlib.pyplot as plt
+import copy
+
+# Snake game where you can't go backwards
 
 class Apple:
     def __init__(self, size):
@@ -25,53 +28,39 @@ class Apple:
 class Snake:
     def __init__(self, size):
         self.size = size
-        self.x, self.y = np.random.randint(0, size, size = 2)
+        self.prev_choice = 0
+        self.x, self.y = 4,4
         self.body = [[self.x, self.y], [self.x+1,self.y], [self.x+2,self.y]]
 
-    def action(self, choice):
+    def action(self, apple, choice=False):
+        if choice == False:
+            choice = np.random.randint(0,3)
         if choice == 0:
-            self.move(x=1, y=1)
+            choice = 0
         elif choice == 1:
-            self.move(x=-1, y=-1)
+            choice = 1
         elif choice == 2:
-            self.move(x=-1, y=1)
+            choice = 2
         elif choice == 3:
-            self.move(x=1, y=-1)
-
-        elif choice == 4:
-            self.move(x=1, y=0)
-        elif choice == 5:
-            self.move(x=-1, y=0)
-
-        elif choice == 6:
-            self.move(x=0, y=1)
-        elif choice == 7:
-            self.move(x=0, y=-1)
-
-        elif choice == 8:
-            self.move(x=0, y=0)
-
-    def move(self,x=False, y=False):
-        if not x:
-            self.x += np.random.randint(-1, 2)
+            choice = 3
         else:
-            self.x += x
+            choice = choice
+        self.prev_choice = choice
 
-        # If no value for y, move randomly
-        if not y:
-            self.y += np.random.randint(-1, 2)
+        if choice == 0:
+            self.x += 1
+        elif choice == 1:
+            self.x -= 1
+        elif choice == 2:
+            self.y += 1
+        elif choice == 3:
+            self.y -= 1
+
+        if self.hit_food(apple):
+            self.body.insert(0, [self.x, self.y])
         else:
-            self.y += y
-
-        # If we are out of bounds, fix!
-        if self.x < 0:
-            self.x = 0
-        elif self.x > self.size-1:
-            self.x = self.size-1
-        if self.y < 0:
-            self.y = 0
-        elif self.y > self.size-1:
-            self.y = self.size-1
+            self.body.insert(0, [self.x, self.y])
+            self.body.pop()
 
     def hit_wall(self, size):
         #[0] --> up(low) down(high) [1] --> left(low) right(high)
@@ -88,7 +77,7 @@ class Snake:
         return f"{[self.x,self.y]}, {self.body}"
 
 class Game:
-    SIZE  = 20
+    SIZE  = 10
     RETURN_IMAGES = True
     MOVE_PENALTY = 1
     FOOD_REWARD = 25
@@ -117,7 +106,7 @@ class Game:
 
     def step(self, action):
         self.episode_step += 1
-        self.snake.action(action)
+        self.snake.action(choice = action, apple = self.food)
 
         if self.RETURN_IMAGES:
             new_observation = np.array(self.get_image())
@@ -137,7 +126,7 @@ class Game:
         return new_observation, reward, done
 
     def render(self):
-        time.sleep(1)
+        time.sleep(3)
         img = self.get_image()
         img = img.resize((500,500))
         cv2.imshow("snake", np.array(img))
@@ -230,25 +219,32 @@ REPLAY_MEMORY_SIZE = 50_000  # How many last steps to keep for model training
 MIN_REPLAY_MEMORY_SIZE = 1_000  # Minimum number of steps in a memory to start training
 MINIBATCH_SIZE = 64  # How many steps (samples) to use for training
 UPDATE_TARGET_EVERY = 5  # Terminal states (end of episodes)
-MODEL_NAME = '2x256'
+MODEL_NAME = 'first_snake'
 MIN_REWARD = -200  # For model save
 MEMORY_FRACTION = 0.20
 
-EPISODES = 10
+EPISODES = 1000
 
 epsilon = 1  # not a constant, going to be decayed
 EPSILON_DECAY = 0.99975
 MIN_EPSILON = 0.001
 
-AGGREGATE_STATS_EVERY = 1
+AGGREGATE_STATS_EVERY = 100
 SHOW_PREVIEW = True
-
+prev_action = 1
 env = Game()
 
 ep_rewards = [-200]
 
+if not os.path.isdir('snake_models'):
+    os.makedirs('snake_models')
+
 agent = DQNAgent()
 
+def wrong_action(action, prev_action):
+    #print(action=='0' or action=='1' or action=='2' or action=='3')
+    #print((action=='0' and prev_action=='1'),(action=='1' and prev_action=='0'), (action=='2' and prev_action=='3'), (action=='3' and prev_action=='2'))
+    return (action==0 and prev_action==1) or (action==1 and prev_action==0) or (action==2 and prev_action==3) or (action==3 and prev_action==2)
 
 for episode in tqdm(range(1, EPISODES+1), ascii=True, unit='episode'):
 
@@ -258,12 +254,27 @@ for episode in tqdm(range(1, EPISODES+1), ascii=True, unit='episode'):
 
     done = False
 
+    print("\n\n\n")
     while not done:
-        if np.random.random() > epsilon:
-            action = np.argmax(agent.get_qs(current_state))
-        else:
-            action = np.random.randint(0, env.ACTION_SPACE_SIZE)
 
+        action=0
+        while True:
+
+            if np.random.random() > epsilon:
+                action = np.argmax(agent.get_qs(current_state))
+                #print(f"action from max {action}")
+            else:
+                action = np.random.randint(0, env.ACTION_SPACE_SIZE)
+                ###METHOD THAT GETS RANDOM ACTION OF THE OTHER THREE THAN THE OPPOSITE DIRECTION
+            print(f"trying {action} and {prev_action}")
+            if not wrong_action(action, prev_action):
+                print(f"{action} and {prev_action} are not opposites")
+                break
+            else:
+                print(f"{action} and {prev_action} are opposites")
+                continue
+        print(f"{action} doesn't equal {prev_action}")
+        prev_action = copy.deepcopy(action)
         new_state, reward, done = env.step(action)
 
         episode_reward += reward
@@ -279,7 +290,7 @@ for episode in tqdm(range(1, EPISODES+1), ascii=True, unit='episode'):
         step +=1
 
     ep_rewards.append(episode_reward)
-    if not episode % AGGREGATE_STATS_EVERY or episode == 1:
+    if not episode % AGGREGATE_STATS_EVERY or episode == 200:
         average_reward = sum(ep_rewards[-AGGREGATE_STATS_EVERY:])/len(ep_rewards[-AGGREGATE_STATS_EVERY:])
         min_reward = min(ep_rewards[-AGGREGATE_STATS_EVERY:])
         max_reward = max(ep_rewards[-AGGREGATE_STATS_EVERY:])
@@ -291,7 +302,7 @@ for episode in tqdm(range(1, EPISODES+1), ascii=True, unit='episode'):
 
         # Save model, but only when min reward is greater or equal a set value
         #if min_reward >= MIN_REWARD:
-        #agent.model.save(f'models/{MODEL_NAME}__{max_reward:_>7.2f}max_{average_reward:_>7.2f}avg_{min_reward:_>7.2f}min__{int(time.time())}.model')
+        agent.model.save(f'{MODEL_NAME}__{max_reward:_>7.2f}max_{average_reward:_>7.2f}avg_{min_reward:_>7.2f}min__{int(time.time())}.model')
 
     # Decay epsilon
     if epsilon > MIN_EPSILON:
