@@ -34,6 +34,7 @@ class Snake:
         self.x, self.y = 4,4
         self.body = [[self.x, self.y], [self.x+1,self.y], [self.x+2,self.y]]
 
+
     def action(self, apple, choice=False):
         if choice == False:
             choice = np.random.randint(0,3)
@@ -63,6 +64,8 @@ class Snake:
         else:
             self.body.insert(0, [self.x, self.y])
             self.body.pop()
+            
+    def moving_backwards(self)
 
     def hit_wall(self, size):
         #[0] --> up(low) down(high) [1] --> left(low) right(high)
