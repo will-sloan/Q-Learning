@@ -1,7 +1,7 @@
 import numpy as np
 import keras.backend.tensorflow_backend as backend
 from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Activation, Flatten
+from tensorflow.keras.layers import Dense, Dropout, Conv2D, Activation, Flatten
 from tensorflow.keras.optimizers import Adam
 #from tensorflow.keras.callbacks import TensorBoard
 import tensorflow as tf
@@ -64,7 +64,7 @@ class Snake:
         else:
             self.body.insert(0, [self.x, self.y])
             self.body.pop()
-            
+
     def moving_backwards(self)
 
     def hit_wall(self, size):
