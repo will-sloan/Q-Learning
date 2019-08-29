@@ -14,8 +14,8 @@ from PIL import Image
 import cv2
 import matplotlib.pyplot as plt
 import copy
-
-LOAD_MODEL = "first_snake__-213.00max_-299.68avg_-312.00min__1566648165.model"
+from time import sleep
+LOAD_MODEL = None
 
 # Snake game that learns that  going backwards is bad
 class Apple:
@@ -65,7 +65,7 @@ class Snake:
             self.body.insert(0, [self.x, self.y])
             self.body.pop()
 
-    def moving_backwards(self)
+    #def moving_backwards(self)
 
     def hit_wall(self, size):
         #[0] --> up(low) down(high) [1] --> left(low) right(high)
@@ -195,6 +195,8 @@ class DQNAgent:
         minibatch = random.sample(self.replay_memory, MINIBATCH_SIZE)
 
         current_states = np.array([transition[0] for transition in minibatch])/255
+        print(current_states.shape)
+        sleep(5)
         current_qs_list = self.model.predict(current_states)
         new_current_states = np.array([transition[3] for transition in minibatch])/255
         future_qs_list = self.target_model.predict(new_current_states)
