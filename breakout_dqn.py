@@ -9,6 +9,7 @@ import numpy as np
 import random
 from PIL import Image
 import matplotlib.pyplot as plt
+import time
 OBS_SPACE = (84,84, 1)
 env = gym.make('Breakout-v0')
 
@@ -37,7 +38,7 @@ class DQNAgent:
 
     def create_model(self):
         if LOAD_MODEL is not None:
-            model.load_model(LOAD_MODEL)
+            model = load_model(LOAD_MODEL)
         else:
             model = Sequential()
             model.add(Conv2D(64, (3,3), input_shape=OBS_SPACE, activation='relu'))
@@ -89,10 +90,12 @@ class DQNAgent:
         self.model.fit(np.array(X).reshape(64,84,84,1)/255, np.array(y), batch_size=MINIBATCH_SIZE, verbose=0, shuffle=False)
 
         if terminal_state:
+            print("FINISHED")
             self.backup_update_counter +=1
 
         if self.backup_update_counter > UPDATE_BACKUP_EVERY:
-            self.backup_update_counter.set_weights(self.model.get_weights())
+            print("UPDATING WEIGHTS")
+            self.backup_model.set_weights(self.model.get_weights())
             self.backup_update_counter = 0
 def convert_gray(image):
     #grey =cv2.resize(cv2.cvtColor(image, cv2.COLOR_BGR2GRAY), (84,84), interpolation=cv2.INTER_LINEAR).reshape(1,84,84,1)
@@ -102,7 +105,7 @@ def convert_gray(image):
 
 aggr_ep_rewards = {'ep': [], 'avg': [], 'min': [], 'max' : []}
 REPLAY_MEMORY_SIZE = 50_000
-LOAD_MODEL = None
+LOAD_MODEL = "Breakout_____6.00max____1.43avg____0.00min__1567101608.model"
 MIN_REPLAY_MEMORY_SIZE = 500
 MINIBATCH_SIZE = 64
 DISCOUNT = 0.95
@@ -118,6 +121,7 @@ fit_every_ep = 5
 agent = DQNAgent()
 
 for episode in tqdm(range(1, EPISODES+1), ascii=True, unit='episode'):
+    #print(f"Episode {episode}")
     current_state = convert_gray(env.reset())
     episode_reward = 0
     done = False
